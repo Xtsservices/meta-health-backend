@@ -1,5 +1,6 @@
 const pool = require("../db/conn");
 const vitaTrackPool = require("../db/vitalTrackConn");
+const moment = require('moment');
 
 const {
   queryInsertVitals,
@@ -431,28 +432,37 @@ function hrvCheckAlert(hrv, age) {
   return { message, priority };
 }
 
+const formatDateTime = (dateStr) => {
+      if (!dateStr || dateStr === '') return null; // Return NULL for empty strings
+      const parsed = moment(dateStr, moment.ISO_8601, true);
+      if (!parsed.isValid()) return null; // Return NULL for invalid dates
+      return parsed.format('YYYY-MM-DD HH:mm:ss'); // MySQL-compatible format
+    };
 async function addVitalsService(timeLineID, data) {
   try {
     const ward = data.ward;
     const age = data.age;
+    console.log("Age----",age, timeLineID)
+    console.log("data====",data)
     const result = await pool.query(queryInsertVitals, [
       timeLineID,
       data.userID,
       data.patientID,
       data.pulse,
-      data.pulseTime,
+     formatDateTime(data.pulseTime),
       data.temperature,
-      data.temperatureTime,
+     formatDateTime(data.temperatureTime) ,
       data.oxygen,
-      data.oxygenTime,
+      formatDateTime(data.oxygenTime),
       data.hrv,
-      data.hrvTime,
+      formatDateTime(data.hrvTime),
       data.respiratoryRate,
-      data.respiratoryRateTime,
+       formatDateTime(data.respiratoryRateTime),
       data.bp,
-      data.bpTime
+      formatDateTime(data.bpTime)
     ]);
 
+    console.log("result===", result[0])
     data.id = result[0].insertId;
 
     // before add alerts verify patient should not in opd
@@ -460,7 +470,7 @@ async function addVitalsService(timeLineID, data) {
     const isOpdQuery = "SELECT ptype from patients where id=?";
     const [isOpdPatient] = await pool.query(isOpdQuery, [pId]);
     const checkPtype = isOpdPatient[0].ptype;
-
+console.log("checkPtype====", checkPtype)
     // Array to collect all potential alerts
     if (checkPtype == 1) return result;
 

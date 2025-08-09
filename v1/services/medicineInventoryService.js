@@ -28,6 +28,7 @@ const getMedicineInventory = async (hospitalID) => {
     const [response] = await pool.query(queryGetMedicineInventory, [
       hospitalID
     ]);
+    console.log("respons====",response)
     if (response.length > 0) {
       return {
         status: 200,
