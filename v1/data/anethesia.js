@@ -1,0 +1,32 @@
+const anesthesia_allergy_list = [
+  "Lidocaine",
+  "Novocaine (procaine)",
+  "Bupivacaine",
+  "Mepivacaine",
+  "Articaine",
+  "Propofol",
+  "Etomidate",
+  "Thiopental",
+  "Ketamine",
+  "Nitrous oxide",
+  "Succinylcholine",
+  "Rocuronium",
+  "Vecuronium",
+  "Pancuronium",
+  "Morphine",
+  "Fentanyl",
+  "Codeine",
+  "Meperidine",
+  "Atropine",
+  "Scopolamine",
+  "Aspirin (Salicylates)",
+  "Ibuprofen",
+  "Naproxen",
+  "Penicillin",
+  "Cephalosporins (e.g., cefazolin, ceftriaxone)",
+  "Erythromycin",
+  "Clindamycin",
+  "Vancomycin"
+];
+
+module.exports = { anesthesia_allergy_list };
