@@ -1059,25 +1059,35 @@ const medicineInventory = ` CREATE TABLE medicineInventory (
  )`;
 
 const medicineInventoryPatientsOrder = `CREATE TABLE medicineInventoryPatientsOrder (
- id INT AUTO_INCREMENT PRIMARY KEY,
- hospitalID int,
- patientID INT,
- foreign key (hospitalID) references hospitals(id),
- patientTimeLineID int,
- foreign key (patientTimeLineID) references patientTimeLine(id),
- location int,
- departmemtType int,
- doctorID int,
- foreign key (doctorID)references users(id),
- medicinesList JSON,
- status enum("rejected","pending","completed"), 
- paymentDetails JSON,
- discount JSON,
- notes text,
- pIdNew int,
- addedOn  timestamp default CURRENT_TIMESTAMP,
- updatedOn TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-)`;
+    id INT NOT NULL AUTO_INCREMENT,
+    hospitalID INT DEFAULT NULL,
+    patientTimeLineID INT DEFAULT NULL,
+    location INT DEFAULT NULL,
+    departmemtType INT DEFAULT NULL,
+    doctorID INT DEFAULT NULL,
+    medicinesList JSON,
+    status ENUM('rejected','pending','completed') DEFAULT 'pending',
+    paymentDetails JSON,
+    notes TEXT,
+    addedOn TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+    discount JSON,
+    pIdNew INT DEFAULT NULL,
+    nurseID INT DEFAULT NULL,
+    nurseStatus ENUM('pending','approved','rejected') DEFAULT 'pending',
+    patientID INT DEFAULT NULL,
+    rejectReason VARCHAR(500),
+    totalAmount DECIMAL(10,2) DEFAULT NULL,
+    paidAmount DECIMAL(10,2) DEFAULT NULL,
+    dueAmount DECIMAL(10,2) DEFAULT NULL,
+    updatedOn TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY hospitalID (hospitalID),
+    KEY patientTimeLineID (patientTimeLineID),
+    KEY doctorID (doctorID),
+    CONSTRAINT medicineInventoryPatientsOrder_ibfk_1 FOREIGN KEY (hospitalID) REFERENCES hospitals (id),
+    CONSTRAINT medicineInventoryPatientsOrder_ibfk_2 FOREIGN KEY (patientTimeLineID) REFERENCES patientTimeLine (id),
+    CONSTRAINT medicineInventoryPatientsOrder_ibfk_3 FOREIGN KEY (doctorID) REFERENCES users (id)
+);`;
 
 const medicineInventoryManufacture = ` CREATE TABLE medicineInventoryManufacture(
   id INT AUTO_INCREMENT PRIMARY KEY,
@@ -1103,7 +1113,8 @@ const medicineInventoryExpense = `CREATE TABLE medicineInventoryExpense(
   medicinesList JSON,
   paymentDetails JSON,
   status enum("pending","approved","rejected"),
-  addedOn timestamp default CURRENT_TIMESTAMP
+  addedOn timestamp default CURRENT_TIMESTAMP,
+    gst INT,
  )`;
 
 const medicineInventoryLogs = ` CREATE TABLE medicineInventoryLogs(
@@ -1118,19 +1129,22 @@ const medicineInventoryLogs = ` CREATE TABLE medicineInventoryLogs(
   userID INT,
  )`;
 
-const medicineInventoryPatients = `CREATE TABLE medicineInventoryPatients(
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  hospitalID INT,
-  FOREIGN KEY (hospitalID) REFERENCES hospitals(id),
-  pID INT,
-  pName varchar(50),
-  phoneNumber varchar(20),
-  city varchar(50),
-  medicinesList JSON,
-  paymentDetails JSON,
-  medGivenBy INT NOT NULL,
-  addedOn timestamp default CURRENT_TIMESTAMP
-)`;
+const medicineInventoryPatients = `CREATE TABLE medicineInventoryPatients (
+    id INT NOT NULL AUTO_INCREMENT,
+    hospitalID INT DEFAULT NULL,
+    pName VARCHAR(50),
+    phoneNumber VARCHAR(20),
+    city VARCHAR(50),
+    addedOn TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+    pID TEXT,
+    fileName TEXT,
+    medicinesList JSON,
+    paymentDetails JSON,
+    medGivenBy INT DEFAULT NULL,
+    PRIMARY KEY (id),
+    KEY hospitalID (hospitalID),
+    CONSTRAINT medicineInventoryPatients_ibfk_1 FOREIGN KEY (hospitalID) REFERENCES hospitals (id)
+);`;
 
 const adminTasks = `CREATE TABLE adminTasks (
   id INT AUTO_INCREMENT PRIMARY KEY,
@@ -1286,6 +1300,197 @@ const staffSchedules = `CREATE TABLE staffSchedules (
     FOREIGN KEY (wardID) REFERENCES wards(id),
     FOREIGN KEY (addedBy) REFERENCES users(id),
 );`
+
+const floor = `CREATE TABLE floor (
+    id INT NOT NULL AUTO_INCREMENT,
+    hospitalID INT DEFAULT NULL,
+    floorname VARCHAR(50) DEFAULT NULL,
+    description TEXT,
+    addedOn TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+    lastModified TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY hospitalID (hospitalID),
+    CONSTRAINT floor_ibfk_1 FOREIGN KEY (hospitalID) REFERENCES hospitals (id)
+);
+`
+
+const beds = `
+CREATE TABLE beds (
+    id INT NOT NULL AUTO_INCREMENT,
+    hospitalID INT DEFAULT NULL,
+    wardID INT DEFAULT NULL,
+    bed_number VARCHAR(50) DEFAULT NULL,
+    floor VARCHAR(50) DEFAULT NULL,
+    room_number VARCHAR(50) DEFAULT NULL,
+    status ENUM('available', 'occupied', 'maintenance') DEFAULT 'available',
+    patientTimeLineID INT DEFAULT NULL,
+    addedOn TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+    lastModified TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    floorId INT DEFAULT NULL,
+    PRIMARY KEY (id),
+    
+    -- Indexes for foreign keys
+    KEY hospitalID (hospitalID),
+    KEY wardID (wardID),
+    KEY floorId (floorId),
+    KEY patientTimeLineID (patientTimeLineID),
+    
+    -- Foreign key constraints
+    CONSTRAINT beds_ibfk_1 FOREIGN KEY (hospitalID) REFERENCES hospitals (id),
+    CONSTRAINT beds_ibfk_2 FOREIGN KEY (wardID) REFERENCES wards (id),
+    CONSTRAINT beds_ibfk_3 FOREIGN KEY (floorId) REFERENCES floor (id),
+    CONSTRAINT beds_ibfk_4 FOREIGN KEY (patientTimeLineID) REFERENCES patientTimeLine (id)
+);
+`
+
+const consentformAttachments = `CREATE TABLE consentformAttachments (
+    id INT NOT NULL AUTO_INCREMENT,
+    timeLineID INT DEFAULT NULL,
+    userID INT DEFAULT NULL,
+    patientID INT DEFAULT NULL,
+    fileName VARCHAR(100) DEFAULT NULL,
+    givenName VARCHAR(100) DEFAULT NULL,
+    mimeType VARCHAR(50) DEFAULT NULL,
+    category VARCHAR(100) DEFAULT NULL,
+    addedOn TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    
+    -- Indexes for foreign keys
+    KEY timeLineID (timeLineID),
+    KEY userID (userID),
+    
+    -- Foreign key constraints
+    CONSTRAINT consentformAttachments_ibfk_1 FOREIGN KEY (timeLineID) REFERENCES patientTimeLine (id),
+    CONSTRAINT consentformAttachments_ibfk_2 FOREIGN KEY (userID) REFERENCES users (id)
+);
+`
+
+const dischargedNotifications = `CREATE TABLE dischargedNotifications (
+    id INT NOT NULL AUTO_INCREMENT,
+    hospitalID INT DEFAULT NULL,
+    patientID INT DEFAULT NULL,
+    doctorID INT DEFAULT NULL,
+    message VARCHAR(255) DEFAULT NULL,
+    notificationType ENUM('discharge_approval') DEFAULT NULL,
+    isViewed TINYINT(1) DEFAULT 0,
+    addedOn TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+    lastModified TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    
+    -- Indexes for foreign keys
+    KEY hospitalID (hospitalID),
+    KEY patientID (patientID),
+    KEY doctorID (doctorID),
+    
+    -- Foreign key constraints
+    CONSTRAINT dischargedNotifications_ibfk_1 FOREIGN KEY (hospitalID) REFERENCES hospitals (id),
+    CONSTRAINT dischargedNotifications_ibfk_2 FOREIGN KEY (patientID) REFERENCES patients (id),
+    CONSTRAINT dischargedNotifications_ibfk_3 FOREIGN KEY (doctorID) REFERENCES users (id)
+);
+`
+
+const doctor_schedules = `CREATE TABLE doctor_schedules (
+    id INT NOT NULL AUTO_INCREMENT,
+    doctor_id INT DEFAULT NULL,
+    hospital_id INT DEFAULT NULL,
+    schedule_name VARCHAR(100) DEFAULT NULL,
+    is_active TINYINT(1) DEFAULT 1,
+    created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    created_by INT DEFAULT NULL,
+    start_date DATE DEFAULT NULL,
+    end_date DATE DEFAULT NULL,
+    PRIMARY KEY (id),
+    KEY doctor_id (doctor_id),
+    KEY hospital_id (hospital_id),
+    CONSTRAINT doctor_schedules_ibfk_1 FOREIGN KEY (doctor_id) REFERENCES users (id),
+    CONSTRAINT doctor_schedules_ibfk_2 FOREIGN KEY (hospital_id) REFERENCES hospitals (id)
+);`
+
+const doctor_schedule_days = `CREATE TABLE doctor_schedule_days (
+    id INT NOT NULL AUTO_INCREMENT,
+    doctor_schedule_id INT DEFAULT NULL,
+    day_of_week ENUM('Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday') DEFAULT NULL,
+    is_enabled TINYINT(1) DEFAULT 1,
+    created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY doctor_schedule_id (doctor_schedule_id),
+    CONSTRAINT doctor_schedule_days_ibfk_1 FOREIGN KEY (doctor_schedule_id) REFERENCES doctor_schedules (id)
+);`
+
+const doctor_schedule_shifts = `CREATE TABLE doctor_schedule_shifts (
+    id INT NOT NULL AUTO_INCREMENT,
+    schedule_day_id INT DEFAULT NULL,
+    shift_name VARCHAR(100) DEFAULT NULL,
+    start_time TIME DEFAULT NULL,
+    end_time TIME DEFAULT NULL,
+    slot_duration INT DEFAULT NULL,
+    capacity_per_slot INT DEFAULT NULL,
+    break_time INT DEFAULT NULL,
+    service_type ENUM('OPD','IPD') DEFAULT 'OPD',
+    department_id INT DEFAULT NULL,
+    ward_id INT DEFAULT NULL,
+    created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY schedule_day_id (schedule_day_id),
+    CONSTRAINT doctor_schedule_shifts_ibfk_1 FOREIGN KEY (schedule_day_id) REFERENCES doctor_schedule_days (id)
+);
+`
+
+const doctor_schedule_exceptions = `
+CREATE TABLE doctor_schedule_exceptions (
+    id INT NOT NULL AUTO_INCREMENT,
+    schedule_id INT DEFAULT NULL,
+    doctor_id INT DEFAULT NULL,
+    hospital_id INT DEFAULT NULL,
+    exception_date DATE DEFAULT NULL,
+    exception_type ENUM('MODIFIED','CANCELLED','ADDITIONAL') DEFAULT NULL,
+    start_time TIME DEFAULT NULL,
+    end_time TIME DEFAULT NULL,
+    slot_duration INT DEFAULT NULL,
+    capacity_per_slot INT DEFAULT NULL,
+    shift_name VARCHAR(100) DEFAULT NULL,
+    service_type ENUM('OPD','IPD') DEFAULT 'OPD',
+    is_active TINYINT(1) DEFAULT 1,
+    created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    created_by INT DEFAULT NULL,
+    PRIMARY KEY (id),
+    KEY schedule_id (schedule_id),
+    KEY doctor_id (doctor_id),
+    KEY hospital_id (hospital_id),
+    CONSTRAINT doctor_schedule_exceptions_ibfk_1 FOREIGN KEY (schedule_id) REFERENCES doctor_schedules (id),
+    CONSTRAINT doctor_schedule_exceptions_ibfk_2 FOREIGN KEY (doctor_id) REFERENCES users (id),
+    CONSTRAINT doctor_schedule_exceptions_ibfk_3 FOREIGN KEY (hospital_id) REFERENCES hospitals (id)
+);
+`
+
+const DoctorAppointmentSchedule = `CREATE TABLE DoctorAppointmentSchedule (
+    id INT NOT NULL AUTO_INCREMENT,
+    doctorID INT DEFAULT NULL,
+    hospitalID INT DEFAULT NULL,
+    slotTimings JSON DEFAULT NULL,
+    dayToggles JSON DEFAULT NULL,
+    addedOn TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+    updatedOn TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    addedBy INT DEFAULT NULL,
+    PRIMARY KEY (id),
+    KEY doctorID (doctorID),
+    KEY hospitalID (hospitalID),
+    CONSTRAINT DoctorAppointmentSchedule_ibfk_1 FOREIGN KEY (doctorID) REFERENCES users (id),
+    CONSTRAINT DoctorAppointmentSchedule_ibfk_2 FOREIGN KEY (hospitalID) REFERENCES hospitals (id)
+);`
+
+const LabTests = `CREATE TABLE LabTests (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    LOINC_Name TEXT,
+    LOINC_Code TEXT,
+    Department TEXT
+);
+`
+
+
+
 
 module.exports = {
   attachments,
