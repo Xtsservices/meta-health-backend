@@ -1281,6 +1281,7 @@ const staffLeaves=`CREATE TABLE staffLeaves (
     FOREIGN KEY (userID) REFERENCES users(id)
 );`
 
+
 const staffSchedules = `CREATE TABLE staffSchedules (
     id INT PRIMARY KEY AUTO_INCREMENT,
     hospitalID INT,
