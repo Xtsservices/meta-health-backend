@@ -49,7 +49,7 @@ const TEMPLATE_ROUTE = require("./v1/routes/template");
 const ADMINTASKS_ROUTE = require("./v1/routes/adminTasks");
 const NURSE_ROUTE = require("./v1/routes/nurse");
 
-const port = process.env.PORT || 3002;
+const port = process.env.PORT || 3000;
 // PATHS
 const API_PATH = "/api/v1";
 const HOSPITAL_PATH = API_PATH + "/hospital";
