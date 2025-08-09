@@ -992,7 +992,6 @@ const attachments = `CREATE TABLE attachments (
     mimeType varchar(50) DEFAULT NULL,
     addedOn timestamp NULL DEFAULT CURRENT_TIMESTAMP,
     category varchar(100) DEFAULT NULL,
-    patientID INT,
     testID INT,
     PRIMARY KEY (id),
     KEY timeLineID (timeLineID),
