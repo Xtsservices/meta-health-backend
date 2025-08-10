@@ -42,6 +42,7 @@ const addInventoryLogs = async (req, res) => {
       medicineList,
       user
     );
+    console.log("result--",result)
     return res.status(result.status).send(result);
   } catch (error) {
     serverError(res, error.message);
@@ -57,7 +58,7 @@ const getInventoryLogs = async (req, res) => {
     const result = await medicineInventoryLogsService.getInventoryLogs(
       hospitalID
     );
-
+console.log("response===", result)
     return res.status(result.status).send(result);
   } catch (error) {
     serverError(res, error.message);

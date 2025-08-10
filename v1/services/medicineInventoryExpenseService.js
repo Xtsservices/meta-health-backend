@@ -19,6 +19,7 @@ const {
 
 const AddInventoryExpense = async (hospitalID, medicineList) => {
   try {
+    console.log("am in===")
     const groupedData = medicineList.reduce((acc, item) => {
       if (!acc[item.agencyName]) acc[item.agencyName] = [];
       acc[item.agencyName].push(item);
@@ -28,7 +29,7 @@ const AddInventoryExpense = async (hospitalID, medicineList) => {
     const agencyWiseData = Object.entries(groupedData).map(
       ([agencyName, items]) => ({ agencyName, items })
     );
-
+console.log("agencywise==",agencyWiseData)
     for (const { agencyName, items } of agencyWiseData) {
       const manufactureData = items[0];
 
@@ -37,7 +38,7 @@ const AddInventoryExpense = async (hospitalID, medicineList) => {
         agencyName,
         manufactureData.manufacturer
       ]);
-
+console.log("res===", response)
       let insertID;
       if (response.length === 0) {
         const [insertResponse] = await pool.query(queryInsertManufactureData, [
@@ -48,6 +49,7 @@ const AddInventoryExpense = async (hospitalID, medicineList) => {
           manufactureData.agentCode,
           manufactureData.manufacturer
         ]);
+        console.log("insertResponse===",insertResponse)
         if (insertResponse.affectedRows <= 0)
           return { status: 500, message: "Unable to insert manufacture data" };
         insertID = insertResponse.insertId;
@@ -60,6 +62,7 @@ const AddInventoryExpense = async (hospitalID, medicineList) => {
         JSON.stringify(items),
         insertID
       ]);
+      console.log("expenseResponse==",expenseResponse)
       if (expenseResponse.affectedRows <= 0)
         return { status: 500, message: "Unable to insert expense data" };
     }

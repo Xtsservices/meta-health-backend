@@ -24,11 +24,12 @@ const changeIsActiveStatus = async (rowID) => {
 };
 
 const getMedicineInventory = async (hospitalID) => {
+  console.log("aakakakka", hospitalID)
   try {
     const [response] = await pool.query(queryGetMedicineInventory, [
       hospitalID
     ]);
-    console.log("respons====",response)
+    console.log("respons====444",response)
     if (response.length > 0) {
       return {
         status: 200,
@@ -40,6 +41,7 @@ const getMedicineInventory = async (hospitalID) => {
       };
     }
   } catch (error) {
+    console.log("erro getMedicineInventory===",error)
     serverError(error);
   }
 };

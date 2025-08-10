@@ -132,7 +132,7 @@ const addInventoryLogs = async (hospitalID, medicineList, user) => {
         );
       }
     }
-
+console.log("response233====",response)
     return { status: 200, data: response };
   } catch (error) {
     return { status: 500, message: error.message };

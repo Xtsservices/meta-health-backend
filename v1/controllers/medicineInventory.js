@@ -26,9 +26,10 @@ const getMedicineInventory = async (req, res) => {
     const result = await medicineInventoryServices.getMedicineInventory(
       hospitalID
     );
-
+console.log("reslu888==",result)
     return res.status(result.status).send(result);
   } catch (error) {
+    console.log("error====",error)
     serverError(error);
   }
 };
