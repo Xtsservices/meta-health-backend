@@ -1,7 +1,7 @@
 const queryInsertVitals = `INSERT INTO 
     vitals(timeLineID,userID,patientID,pulse,pulseTime,temperature,temperatureTime,
-        oxygen,oxygenTime, hrv, hrvTime, respiratoryRate,respiratoryRateTime,bp,bpTime,addedOn)
-    VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,now())`;
+        oxygen,oxygenTime, hrv, hrvTime, respiratoryRate,respiratoryRateTime,bp,bpTime,addedOn,givenTime)
+    VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,now(),now())`;
 
 const queryAddAlert = `INSERT INTO vitalAlerts (timeLineID,vitalID,alertType,alertMessage,alertValue,ward,priority,datetime) 
     VALUES (?,?,?,?,?,?,?,?)`;

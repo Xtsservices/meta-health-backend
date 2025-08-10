@@ -431,6 +431,24 @@ function hrvCheckAlert(hrv, age) {
   return { message, priority };
 }
 
+function getCurrentDateTime() {
+  const now = new Date();
+
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0'); // Months are 0-based
+  const day = String(now.getDate()).padStart(2, '0');
+
+  const hours = String(now.getHours()).padStart(2, '0');
+  const minutes = String(now.getMinutes()).padStart(2, '0');
+  const seconds = String(now.getSeconds()).padStart(2, '0');
+
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+}
+
+// console.log(getCurrentDateTime());
+
+
+
 const formatDateTime = (dateStr) => {
       if (!dateStr || dateStr === '') return null; // Return NULL for empty strings
       const parsed = moment(dateStr, moment.ISO_8601, true);
@@ -458,7 +476,8 @@ async function addVitalsService(timeLineID, data) {
       data.respiratoryRate,
        formatDateTime(data.respiratoryRateTime),
       data.bp,
-      formatDateTime(data.bpTime)
+      formatDateTime(data.bpTime),
+      getCurrentDateTime()
     ]);
 
     console.log("result===", result[0])
