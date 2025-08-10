@@ -1,5 +1,4 @@
 const pool = require("../db/conn");
-const vitaTrackPool = require("../db/vitalTrackConn");
 
 const {
   findUserByEmail,
@@ -637,16 +636,6 @@ async function createStaff(hospitalID, reqBodyData, reqbodyfile) {
         ) VALUES (?, ?, ?, NOW(), NOW(), 1,   ?, ?, ?, ?, ?);
       `;
     
-      await vitaTrackPool.query(queryInsert, [
-        `${firstName} ${lastName}`, // name
-        email,
-        pass,
-        role, 
-        hospitalID,
-        state,
-        city,
-        address
-      ]);
     
     }
     

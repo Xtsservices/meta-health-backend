@@ -6,7 +6,6 @@ const {
   notAllowed,
 } = require("../utils/errors");
 const pool = require("../db/conn");
-const nvcorePool = require("../db/nvcoredbconn");
 
 const bcrypt = require("bcrypt");
 const {
@@ -38,7 +37,6 @@ const doctorService = require("../services/doctorService");
 // const { removeAllDoctor } = require("./doctor");
 const { addDoctor, removeAllDoctor } = require("../services/doctorService");
 const { log } = require("console");
-const vitaTrackPool = require("../db/vitalTrackConn");
 const { findUserByID } = require("../queries/userQueries");
 
 const queryFindPatientByPID =
@@ -710,142 +708,12 @@ function calculateAge(dob) {
   return age;
 }
 
-const registerPatient = async (patientDataInfo) => {
-  try {
-    const role = "Patient";
-
-    const [emailExists] = await nvcorePool.query(
-      "SELECT * FROM user WHERE email = ?",
-      [patientDataInfo.email]
-    );
-    if (emailExists.length > 0) {
-      throw new Error("Email already exists");
-    }
-
-    const [mobileNumExists] = await nvcorePool.query(
-      "SELECT * FROM user WHERE mobileNumber = ?",
-      [patientDataInfo.mobileNumber]
-    );
-    if (mobileNumExists.length > 0) {
-      throw new Error("Mobile Number already exists");
-    }
-
-    const hashedPassword = await bcrypt.hash(patientDataInfo.password, 10);
-
-    const [userResult] = await nvcorePool.query(
-      `INSERT INTO user (email, password, mobileNumber, name, gender, role, countryCode, address) 
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        patientDataInfo.email,
-        hashedPassword,
-        patientDataInfo.mobileNumber,
-        patientDataInfo.name,
-        patientDataInfo.gender,
-        role,
-        patientDataInfo.countryCode,
-        patientDataInfo.address,
-      ]
-    );
-
-    const userId = userResult.insertId;
-
-    await nvcorePool.query(
-      `
-      INSERT INTO patients (
-    name, 
-    gender,
-    mobileNumber, 
-    Age, 
-    Weight, 
-    Height, 
-    userId
-  ) VALUES (?,?, ?, ?, ?, ?, ?);
-      `,
-      [
-        patientDataInfo.name,
-        patientDataInfo.gender,
-        patientDataInfo.mobileNumber,
-        patientDataInfo.Age,
-        patientDataInfo.Weight,
-        patientDataInfo.Height,
-        userId,
-      ]
-    );
-
-    return { success: true, message: "success", userId };
-  } catch (error) {
-    console.error("Error in registerPatient:", error);
-    return { success: false, message: error.message };
-  }
-};
-
-
-
-// ========== VitaTrack Patient Insertion Function in vitaTrack db===========
-const addVitaTrackPatient = async (vitaTrackConnection, patientData, hospitalID,userID,doctorEmail) => {
-  try {
-    const qyeryGetUserByEmail = `select * from users where email=?`
-    const queryCheckVitaTrackPatient = `
-  SELECT * FROM patients WHERE pName = ? AND phoneNumber = ?
-`;
-    const queryAddVitaTrackPatient = `
-  INSERT INTO patients (hospitalID, pName, dob, phoneNumber, gender, weight, height, age, addedBy, photo,hospitalUserId)
-  VALUES (?,?, ?, ?, ?, ?, ?, ?, ?, ?,?)
-`;
-    const [user] = await vitaTrackConnection.query(qyeryGetUserByEmail, [doctorEmail])
-    console.log(user)
-    // Map hospital patient data to VitaTrack format
-    const vitaTrackPatientData = {
-      hospitalID,
-      pName: patientData.pName,
-      dob: patientData.dob || null,
-      phoneNumber: patientData.phoneNumber,
-      gender: mapGender(patientData.gender),
-      weight: patientData.weight || null,
-      height: patientData.height || null,
-      age: patientData.age || calculateAge(patientData.dob),
-      addedBy: user[0]?.id,
-      photo: patientData.photo || null,
-      userID:userID
-    };
-
-    // Check for duplicate in VitaTrack
-    const [vitaTrackExists] = await vitaTrackConnection.query(
-      queryCheckVitaTrackPatient,
-      [vitaTrackPatientData.pName, vitaTrackPatientData.phoneNumber]
-    );
-    if (vitaTrackExists.length > 0) {
-      throw new Error('Patient already exists in VitaTrack');
-    }
-
-    // Insert into VitaTrack patients
-    const [result] = await vitaTrackConnection.query(queryAddVitaTrackPatient, [
-      vitaTrackPatientData.hospitalID,
-      vitaTrackPatientData.pName,
-      vitaTrackPatientData.dob,
-      vitaTrackPatientData.phoneNumber,
-      vitaTrackPatientData.gender,
-      vitaTrackPatientData.weight,
-      vitaTrackPatientData.height,
-      vitaTrackPatientData.age,
-      vitaTrackPatientData.addedBy,
-      vitaTrackPatientData.photo,
-      vitaTrackPatientData.userID
-    ]);
-
-    return { status: 201, message: 'Patient added to VitaTrack', patientId: result.insertId };
-  } catch (err) {
-    throw new Error(`VitaTrack insertion failed: ${err.message}`);
-  }
-};
-
 /**
  * ** METHOD : POST
  * ** DESCRIPTION : Create new patient with unique patientID in hospital and also patient timeline
  */
 const addPatient = async (req, res) => {
   let connection;
-  let vitaTrackConnection;
   try {
     const hospitalID = req.params.hospitalID;
     const wardID = req.body.wardID;
@@ -956,14 +824,13 @@ const addPatient = async (req, res) => {
     }
     // console.log("testing here");
     connection = await pool.getConnection();
-    vitaTrackConnection = await vitaTrackPool.getConnection();
     await connection.beginTransaction();
-    await vitaTrackConnection.beginTransaction();
     // console.log("lets insert.....", Object.values(patientData));
     if (wardID) {
       const decreaseWardBeds = await connection.query(queryDecreaseWardBed, [
         wardID,
       ]);
+
       // console.log("decreased-------------------", decreaseWardBeds);
       if (!decreaseWardBeds[0].changedRows) {
         return notAllowed(res, "Ward reached it's maximum occupancy");
@@ -1028,36 +895,11 @@ const addPatient = async (req, res) => {
       if (pat[0]) pat[0].imageURL = sendImageURL;
     }
 
-    // ======================for nvcore start===================
-
-    const patientDataInfo = {
-      name: patientData.pName,
-      mobileNumber: patientData.phoneNumber,
-      Age: patientData.dob ? calculateAge(patientData.dob) : null,
-      gender: mapGender(patientData.gender),
-      address: patientData.address,
-      email: patientData.email,
-      password: "Test@123",
-      countryCode: "IN",
-      Weight: patientData.weight,
-      Height: patientData.height
-    };
-    await registerPatient(patientDataInfo);
-
-    // ======================for nvcore end===================
-
-    //============== Add to VitaTrack patients================
-
-    const vitaTrackResult = await addVitaTrackPatient(vitaTrackConnection, patientData, hospitalID,userID,doctorEmail);
-    if (vitaTrackResult.status !== 201) {
-      throw new Error(vitaTrackResult.message);
-    }
-    await vitaTrackConnection.commit();
-    //============== Add to VitaTrack patients end==============
     res.status(201).send({
       message: "success",
       patient: pat?.[0],
     });
+
   } catch (err) {
     if (err.isJoi) {
       return missingBody(res, err.message);
@@ -1065,13 +907,11 @@ const addPatient = async (req, res) => {
     if (connection) {
       connection.rollback();
     }
-    if (vitaTrackConnection) await vitaTrackConnection.rollback();
     serverError(res, err.message);
   } finally {
     if (connection) {
       connection.release();
     }
-    if (vitaTrackConnection) vitaTrackConnection.release();
   }
 };
 
@@ -2148,15 +1988,7 @@ const dischargePatient = async (req, res) => {
       dischargeData.diagnosis,
       foundPatient.patientTimeLineID,
     ]);
-    //============discharge patient from vital app start============
-    const queryUpdatVitalPatient = `UPDATE patients SET ptype=21 WHERE pName=? AND phoneNumber=? AND hospitalID=?`
- await vitaTrackPool.query(queryUpdatVitalPatient, [
-      foundPatient.pName,
-      foundPatient.phoneNumber,
-      hospitalID
-    ]);
-
-    //============discharge patient from vital app end============
+    
 
 
     await connection.commit();

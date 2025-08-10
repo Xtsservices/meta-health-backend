@@ -7,7 +7,6 @@ const {
 const pool = require("../db/conn");
 const { schema } = require("../helper/validators/hubValidator");
 const hubServices = require("../services/hubService");
-const vitaTrackPool = require("../db/vitalTrackConn");
 
 const queryFindHub = "SELECT * FROM hubs WHERE hubAddress=?";
 const queryUpdateHospitalID =
@@ -66,33 +65,12 @@ const addHub = async (req, res) => {
 };
 
 const getAllHubs = async (req, res) => {
-  const hospitalID = req.params.hospitalID;
-  let connection;
+
   try {
-    if (!hospitalID || isNaN(hospitalID)) {
-      return res.status(400).json({ message: 'Invalid hospitalID' });
-    }
-
-    // Get connection to VitaTrack DB
-    connection = await vitaTrackPool.getConnection();
-
-    // Query users with the given hospitalID
-    const getUsersQuery = 'SELECT id FROM users WHERE hospitalID = ? AND active = 1';
-    const [user] = await connection.query(getUsersQuery, [hospitalID]);
-    if (user.length === 0) {
-      return res.status(200).json({
-        message: 'success',
-        hubs: [],
-      });
-    }
-    const userId = user[0].id;
-    const getHubsQuery = 'SELECT * FROM hubs WHERE userId = ? AND active = 1';
-    const [hubs] = await connection.query(getHubsQuery, [userId]);
-    // const results = await hubServices.getAllHubs(hospitalID);
+   
 
     res.status(200).send({
       message: "success",
-      hubs
     });
   } catch (err) {
     serverError(res, err.message);

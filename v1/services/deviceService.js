@@ -16,7 +16,6 @@ const {
   queryGetAllHospitalDevices,
   queryUpdatePatientWithDevice
 } = require("../queries/deviceQueries");
-const vitaTrackPool = require("../db/vitalTrackConn");
 
 /**
  * ** METHOD : POST
@@ -104,21 +103,11 @@ const addEmptyDevice = async (req, res) => {
  * ** DESCRIPTION : get all devices connected to hub
  */
 const getAllDevices = async (hubID) => {
-  let connection;
   try {
-    const queryGetAllDevices = `
-  SELECT id, macId, code, addedOn, userId, active, hubID, invoiceNumber, purchaseDate
-  FROM devices
-  WHERE hubID = ? AND active = 1
-`;
-    connection = await vitaTrackPool.getConnection();
-    const [results] = await connection.query(queryGetAllDevices, [hubID]);
-    return [results];
+    return [];
   } catch (err) {
     console.error('Error fetching devices:', err);
     throw err;
-  } finally {
-    if (connection) connection.release();
   }
 };
 
@@ -142,27 +131,17 @@ const getAllHospitalDevices2 = async (hospitalID) => {
 };
 
 const getAllHospitalDevices = async (hospitalID) => {
-  let connection;
   try {
-    connection = await vitaTrackPool.getConnection();
-
-    // Query to get devices for users in the given hospital
-    const query = `
-      SELECT d.id, d.macId, d.code, d.addedOn, d.userId, d.active, d.hubID, 
-             d.invoiceNumber, d.purchaseDate
-      FROM devices d
-      JOIN users u ON d.userId = u.id
-      WHERE u.hospitalID = ? AND d.active = 1
-    `;
-    const [devices] = await connection.query(query, [hospitalID]);
-
-    return [devices];
+  
+    return [
+      {
+        message: "success",
+      }
+    ];
   } catch (err) {
     console.error('Error fetching hospital devices:', err);
     throw err;
-  } finally {
-    if (connection) connection.release();
-  }
+  } 
 };
 
 module.exports = {

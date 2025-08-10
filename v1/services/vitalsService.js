@@ -1,5 +1,4 @@
 const pool = require("../db/conn");
-const vitaTrackPool = require("../db/vitalTrackConn");
 const moment = require('moment');
 
 const {
@@ -922,47 +921,8 @@ async function getVitalFunctions(patientID) {
 
 async function getHomecareVitalFunctions(patientID) {
   try {
-    const heartRateResult = await vitaTrackPool.query(queryHomeGetHeartRateFunctions, [patientID]);
-    const temperatureResult = await vitaTrackPool.query(queryGetHomeCareTemperatureFunctions, [patientID]);
-    const spo2Result = await vitaTrackPool.query(queryGetHomeCareSpo2Functions, [patientID]);
-    const respiratoryRateResult = await vitaTrackPool.query(queryGetHomeCareRespiratoryRateFunctions, [patientID]);
-    const hrvResult = await vitaTrackPool.query(queryGetHomeCareHRVFunctions, [patientID]);
-    const batteryPercentageResult = await vitaTrackPool.query(queryGetHomeBatteryPercentageFunctions, [patientID]);
-
-    const result = {
-      heartRate: {
-        avg: heartRateResult[0][0].avgHeartRate ? `${parseFloat(heartRateResult[0][0].avgHeartRate).toFixed(2)} beats/min` : null,
-        min: heartRateResult[0][0].minHeartRate ? `${parseFloat(heartRateResult[0][0].minHeartRate).toFixed(2)} beats/min` : null,
-        max: heartRateResult[0][0].maxHeartRate ? `${parseFloat(heartRateResult[0][0].maxHeartRate).toFixed(2)} beats/min` : null
-      },
-      temperature: {
-        avg: temperatureResult[0][0].avgTemperature ? `${parseFloat(temperatureResult[0][0].avgTemperature).toFixed(2)}°C` : null,
-        min: temperatureResult[0][0].minTemperature ? `${parseFloat(temperatureResult[0][0].minTemperature).toFixed(2)}°C` : null,
-        max: temperatureResult[0][0].maxTemperature ? `${parseFloat(temperatureResult[0][0].maxTemperature).toFixed(2)}°C` : null
-      },
-      spo2: {
-        avg: spo2Result[0][0].avgSpo2 ? `${parseFloat(spo2Result[0][0].avgSpo2).toFixed(2)}%` : null,
-        min: spo2Result[0][0].minSpo2 ? `${parseFloat(spo2Result[0][0].minSpo2).toFixed(2)}%` : null,
-        max: spo2Result[0][0].maxSpo2 ? `${parseFloat(spo2Result[0][0].maxSpo2).toFixed(2)}%` : null
-      },
-      respiratoryRate: {
-        avg: respiratoryRateResult[0][0].avgRespiratoryRate ? `${parseFloat(respiratoryRateResult[0][0].avgRespiratoryRate).toFixed(2)} breaths/min` : null,
-        min: respiratoryRateResult[0][0].minRespiratoryRate ? `${parseFloat(respiratoryRateResult[0][0].minRespiratoryRate).toFixed(2)} breaths/min` : null,
-        max: respiratoryRateResult[0][0].maxRespiratoryRate ? `${parseFloat(respiratoryRateResult[0][0].maxRespiratoryRate).toFixed(2)} breaths/min` : null
-      },
-      heartRateVariability: {
-        avg: hrvResult[0][0].avgHRV ? `${parseFloat(hrvResult[0][0].avgHRV).toFixed(2)} ms` : null,
-        min: hrvResult[0][0].minHRV ? `${parseFloat(hrvResult[0][0].minHRV).toFixed(2)} ms` : null,
-        max: hrvResult[0][0].maxHRV ? `${parseFloat(hrvResult[0][0].maxHRV).toFixed(2)} ms` : null
-      },
-      batteryPercentage: {
-        avg: batteryPercentageResult[0][0].avgBatteryPercentage ? `${parseFloat(batteryPercentageResult[0][0].avgBatteryPercentage).toFixed(2)}%` : null,
-        min: batteryPercentageResult[0][0].minBatteryPercentage ? `${parseFloat(batteryPercentageResult[0][0].minBatteryPercentage).toFixed(2)}%` : null,
-        max: batteryPercentageResult[0][0].maxBatteryPercentage ? `${parseFloat(batteryPercentageResult[0][0].maxBatteryPercentage).toFixed(2)}%` : null
-      }
-    };
-
-    return result;
+  
+    return [];
   } catch (err) {
     throw new Error(err.message);
   }
@@ -971,19 +931,7 @@ async function getHomecareVitalFunctions(patientID) {
 
 async function getHomeCarePatient(patientID, vital, date) {
   try {
-    let result;
-
-    const queryGetSingleVitalHome = `SELECT * from vitals where patientID = ? And DATE(addedOn) = ?`    
-     // Validate date format (YYYY-MM-DD)
-     if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
-      throw new Error("Invalid or missing date parameter (use YYYY-MM-DD)");
-    }
-      result = await vitaTrackPool.query(queryGetSingleVitalHome, [
-        patientID,
-        date
-      ]);
-
-    return result;
+    return [];
   } catch (err) {
     throw new Error(err.message);
   }

@@ -47,16 +47,35 @@ WHERE hospitalID = ? AND category = ? AND approved_status BETWEEN ? AND ? `;
 // WHERE tests.hospitalID = ?  and tests.category = ? and tests.userID = ? AND tests.isViewed=1
 // GROUP BY tests.timeLineID;`;
 
-const queryGetAllPatientList = `SELECT distinct tests.timeLineID, tests.userID, tests.status, patientTimeLine.patientID, patients.pID, patients.pName, wards.id, wards.name as ward_name, departments.id,  departments.name as department_name , patients.photo, patients.phoneNumber, patients.ptype, patientTimeLine.patientStartStatus
-FROM tests 
-LEFT JOIN patientTimeLine on tests.timeLineID = patientTimeLine.id 
-LEFT JOIN departments on patientTimeLine.departmentID = departments.id 
-LEFT JOIN patients on  patientTimeLine.patientID = patients.id
-LEFT JOIN wards on patientTimeLine.wardID=wards.id
-WHERE tests.hospitalID = ?  and tests.category = ? and tests.alertStatus = 'approved'
+const queryGetAllPatientList = `SELECT
+    tests.timeLineID,
+    MAX(tests.userID) AS userID,
+    MAX(tests.status) AS status,
+    MAX(patientTimeLine.patientID) AS patientID,
+    MAX(patients.pID) AS pID,
+    MAX(patients.pName) AS pName,
+    MAX(wards.id) AS ward_id,
+    MAX(wards.name) AS ward_name,
+    MAX(departments.id) AS department_id,
+    MAX(departments.name) AS department_name,
+    MAX(patients.photo) AS photo,
+    MAX(patients.phoneNumber) AS phoneNumber,
+    MAX(patients.ptype) AS ptype,
+    MAX(patientTimeLine.patientStartStatus) AS patientStartStatus
+FROM tests
+LEFT JOIN patientTimeLine ON tests.timeLineID = patientTimeLine.id
+LEFT JOIN departments ON patientTimeLine.departmentID = departments.id
+LEFT JOIN patients ON patientTimeLine.patientID = patients.id
+LEFT JOIN wards ON patientTimeLine.wardID = wards.id
+WHERE tests.hospitalID = ?
+  AND tests.category = ?
+  AND tests.alertStatus = 'approved'
 GROUP BY tests.timeLineID
-HAVING SUM(CASE WHEN tests.status IN ('pending', 'processing') THEN 1 ELSE 0 END) > 0
-ORDER BY tests.id DESC;`;
+HAVING SUM(
+    CASE WHEN tests.status IN ('pending', 'processing') THEN 1 ELSE 0 END
+) > 0
+ORDER BY MAX(tests.id) DESC;
+`;
 
 const queryGetPatientDetails = `SELECT tests.*, patientTimeLine.patientID ,patients.pID, patients.pName,patients.city,patients.state, patientDoctors.doctorID , users.firstName as doctor_firstName, users.lastName as doctor_lastName, wards.name as ward_name FROM tests 
 LEFT JOIN patientTimeLine on tests.timeLineID = patientTimeLine.id 

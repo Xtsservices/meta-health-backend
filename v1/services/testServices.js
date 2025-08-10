@@ -553,6 +553,8 @@ const updateAlertsTestStatus = async (
 
     let updateTestsQuery = "";
     let queryParams = [];
+            console.log("existingPayment", 1);
+
 
     if (status === "rejected") {
       updateTestsQuery = `
@@ -565,7 +567,11 @@ const updateAlertsTestStatus = async (
       `;
       queryParams = [rejectReason, hospitalID, patientID, category];
     } else if (status === "approved") {
+            console.log("existingPayment", 2);
+
       if (allTests.length > 0) {
+            console.log("existingPayment", 3);
+
         let totalAmount = 0;
         let timelineID = allTests[0].timeLineID;
 
@@ -581,9 +587,12 @@ const updateAlertsTestStatus = async (
             totalAmount += priceWithGST;
           }
         }
+            console.log("existingPayment", 4);
 
         if (totalAmount > 0) {
           // Check if payment record exists for the patient
+            console.log("existingPayment", 5);
+
           const checkPaymentQuery = `
                 SELECT * FROM testPaymentDetails 
                 WHERE hospitalID = ? 
@@ -597,7 +606,10 @@ const updateAlertsTestStatus = async (
           ]);
 
           if (existingPayment.length > 0) {
+            console.log("existingPayment", 6);
+
             // Update existing payment record
+            console.log("existingPayment", existingPayment[0]);
             const updatePaymentQuery = `
                     UPDATE testPaymentDetails 
                     SET totalAmount = totalAmount + ?, 
@@ -613,10 +625,12 @@ const updateAlertsTestStatus = async (
               category
             ]);
           } else {
+            console.log("existingPayment", 7);
+
             // Insert new payment record
             const insertPaymentQuery = `
-                    INSERT INTO testPaymentDetails (hospitalID, patientID, timelineID, userID, testCategory, totalAmount, paidAmount,  addedOn, lastUpdatedOn)
-                    VALUES (?, ?, ?, ?, ?,  ?, 0,  CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+                    INSERT INTO testPaymentDetails (hospitalID, patientID, timelineID, userID, testCategory, totalAmount, paidAmount,dueAmount,  addedOn, lastUpdatedOn)
+                    VALUES (?, ?, ?, ?, ?,  ?, 0, 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
                 `;
 
             await pool.query(insertPaymentQuery, [
@@ -630,6 +644,7 @@ const updateAlertsTestStatus = async (
           }
         }
       }
+            console.log("existingPayment", 8);
 
       updateTestsQuery = `
         UPDATE tests 
@@ -641,6 +656,7 @@ const updateAlertsTestStatus = async (
       `;
       queryParams = [hospitalID, patientID, category];
     }
+            console.log("existingPayment", 9);
 
     await pool.query(updateTestsQuery, queryParams);
     return { status: 200, message: `Test status updated to ${status}` };
@@ -1013,7 +1029,7 @@ const updateTestPaymentDetails = async (
                 AND patientID = ? 
                 AND testCategory = ?
             `;
-
+console.log("newDueAmount",newDueAmount)
     await pool.query(updatePaymentQuery, [
       JSON.stringify(paymentDetails),
       JSON.stringify(discountDetails),
